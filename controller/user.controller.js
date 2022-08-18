@@ -10,11 +10,28 @@ class UserController {
             console.log(err);
         }
     }
+    async registration(req, res) {
+        try {
+            const {name, login, email, password} = req.body;
+            const findUserByLogin = await db.query(`SELECT * FROM person WHERE login='${login}'`)
+            if(findUserByLogin.rows[0]) {
+                return res.status(400).json({ error: `Пользователь с таким логином уже сужествует` });
+            }
+            const newPerson = await db.query(`INSERT INTO person (name, login, email, password) VALUES($1, $2, $3, $4) RETURNING *`, [name, login, email, password])
+            return res.json(newPerson.rows[0])
+        } catch (err) {
+            console.log(err);
+        }
+    }
     async login(req, res) {
         try {
-            const {phone} = req.body;
+            const {phone, password} = req.body;
             const findUserByPhone = await db.query(`SELECT * FROM person WHERE phone='${phone}'`)
-            return res.json(findUserByPhone.rows[0]) 
+            if(!findUserByPhone.rows[0]) {
+                return res.status(400).json({ error: `Пользователь с номером телефона ${phone} не найден` });
+            }
+
+            return res.json(findUserByPhone.rows[0])
         } catch (err) {
             console.log(err);
         }
